@@ -9,6 +9,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -26,10 +27,24 @@ namespace Ant
 
         public int antIndex;
         public int antDirection; // 0 = Вверх, 1 = Вправо, 2 = Вниз, 3 = Влево.
-        public string[] arrows = { "▲", "▶", "▼", "◀" };
+
+        private Border[] cells;   // клетки поля
+        private bool[] isBlack;   // состояние клеток (true = черная)
+        private double antAngle;  // накопленный угол поворота
 
         private StackPanel currentRuleList; // Какой список сейчас выполняется
         private int currentActionIndex = 0; // Индекс текущего действия в этом списке
+
+        // Easing для поворота муравья
+        private static readonly IEasingFunction TurnEase =
+            new CubicEase { EasingMode = EasingMode.EaseInOut };
+
+        // Easing для смены цвета клетки
+        private static readonly IEasingFunction ColorEase =
+            new QuadraticEase { EasingMode = EasingMode.EaseOut };
+
+        private TimeSpan StepDuration =>
+            TimeSpan.FromMilliseconds(Math.Max(antTimer.Interval.TotalMilliseconds * 0.9, 1));
 
         public MainWindow()
         {
@@ -63,34 +78,34 @@ namespace Ant
             int totalCells = rows * columns;
 
             antIndex = r.Next(totalCells); // случайная клетка
-            antDirection = r.Next(4); // направление
+            antDirection = r.Next(4);      // направление
+
+            cells = new Border[totalCells];
+            isBlack = new bool[totalCells];
 
             for (int i = 0; i < totalCells; i++)
             {
-                bool isBlack = r.NextDouble() < blackChance;
+                isBlack[i] = r.NextDouble() < blackChance;
 
-                var cell = new Border
+                // Своя незамороженная кисть у каждой клетки — иначе цвет нельзя анимировать
+                cells[i] = new Border
                 {
-                    Background = isBlack ? Brushes.Black : Brushes.White,
+                    Background = new SolidColorBrush(isBlack[i] ? Colors.Black : Colors.White),
                     BorderBrush = Brushes.Gray,
                     BorderThickness = new Thickness(0.5)
                 };
 
-                if (i == antIndex) // клетка с муравьем
-                {
-                    cell.Child = new TextBlock
-                    {
-                        Text = arrows[antDirection],
-                        Foreground = Brushes.Red,
-                        FontWeight = FontWeights.Bold,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        FontSize = 20
-                    };
-                }
-
-                MyGrid.Children.Add(cell);
+                MyGrid.Children.Add(cells[i]);
             }
+
+            // Сбрасываем муравья: убираем возможные анимации и ставим без плавности
+            antAngle = antDirection * 90;
+            AntRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+            AntRotate.Angle = antAngle;
+            AntShape.Visibility = Visibility.Visible;
+
+            MyGrid.UpdateLayout();
+            PlaceAnt(animate: false);
         }
 
         private void Start(object sender, RoutedEventArgs e)
@@ -108,6 +123,7 @@ namespace Ant
             StartButton.IsEnabled = true;
             PauseButton.IsEnabled = false;
         }
+
         private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (antTimer == null || SpeedLabel == null) return;
@@ -115,6 +131,12 @@ namespace Ant
             int delay = (int)SpeedSlider.Value;
             antTimer.Interval = TimeSpan.FromMilliseconds(delay);
             SpeedLabel.Text = $"{delay} мс";
+        }
+
+        private void Field_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // При изменении размера окна пересчитываем размер и позицию муравья
+            PlaceAnt(animate: false);
         }
 
         private void ActionBlock_MouseMove(object sender, MouseEventArgs e)
@@ -171,14 +193,66 @@ namespace Ant
             }
         }
 
+        // Анимации 
+
+        private void Animate(Animatable target, DependencyProperty prop, double to,
+                             bool animate, IEasingFunction easing = null)
+        {
+            if (!animate)
+            {
+                target.BeginAnimation(prop, null); // снимаем удерживаемую анимацию
+                target.SetValue(prop, to);
+                return;
+            }
+
+            target.BeginAnimation(prop, new DoubleAnimation(to, StepDuration)
+            {
+                EasingFunction = easing
+            });
+        }
+
+
+        // Ставит муравья в клетку antIndex и подгоняет его размер под размер клетки
+        private void PlaceAnt(bool animate)
+        {
+            if (cells == null || MyGrid.Columns == 0 || MyGrid.Rows == 0) return;
+
+            int cols = MyGrid.Columns;
+            int rows = MyGrid.Rows;
+            double cellW = MyGrid.ActualWidth / cols;
+            double cellH = MyGrid.ActualHeight / rows;
+
+            AntShape.Width = cellW * 0.7;
+            AntShape.Height = cellH * 0.7;
+
+            double x = (antIndex % cols) * cellW + cellW * 0.15;
+            double y = (antIndex / cols) * cellH + cellH * 0.15;
+
+            // Движение линейное
+            Animate(AntMove, TranslateTransform.XProperty, x, animate);
+            Animate(AntMove, TranslateTransform.YProperty, y, animate);
+        }
+
+        // Плавно перекрашивает клетку
+        private void SetCell(int index, bool black)
+        {
+            isBlack[index] = black;
+
+            var brush = (SolidColorBrush)cells[index].Background;
+            brush.BeginAnimation(SolidColorBrush.ColorProperty,
+                new ColorAnimation(black ? Colors.Black : Colors.White, StepDuration)
+                {
+                    EasingFunction = ColorEase
+                });
+        }
+
+        // Логика муравья 
+
         private void StepAnt()
         {
-            var currentCell = (Border)MyGrid.Children[antIndex];
-
             if (currentRuleList == null || currentActionIndex >= currentRuleList.Children.Count)
             {
-                bool isBlack = currentCell.Background == Brushes.Black;
-                currentRuleList = isBlack ? BlackRulesPanel : WhiteRulesPanel;
+                currentRuleList = isBlack[antIndex] ? BlackRulesPanel : WhiteRulesPanel;
                 currentActionIndex = 0;
 
                 if (currentRuleList.Children.Count == 0) return;
@@ -190,45 +264,50 @@ namespace Ant
             switch (action)
             {
                 case "Flip":
-                    currentCell.Background = (currentCell.Background == Brushes.Black) ? Brushes.White : Brushes.Black;
+                    SetCell(antIndex, !isBlack[antIndex]);
                     break;
 
                 case "Right":
                     antDirection = (antDirection + 1) % 4;
-                    if (currentCell.Child is TextBlock tbRight)
-                        tbRight.Text = arrows[antDirection];
+                    antAngle += 90;
+                    Animate(AntRotate, RotateTransform.AngleProperty, antAngle, true, TurnEase);
                     break;
 
                 case "Left":
                     antDirection = (antDirection + 3) % 4;
-                    if (currentCell.Child is TextBlock tbLeft)
-                        tbLeft.Text = arrows[antDirection];
+                    antAngle -= 90;
+                    Animate(AntRotate, RotateTransform.AngleProperty, antAngle, true, TurnEase);
                     break;
 
                 case "Go":
-                    var antVisual = currentCell.Child;
-                    currentCell.Child = null;
-                    MoveAntForward();
-                    ((Border)MyGrid.Children[antIndex]).Child = antVisual;
+                    bool wrapped = MoveAntForward();
+                    // При переходе через край поля муравей телепортируется
+                    PlaceAnt(animate: !wrapped);
                     break;
             }
 
             currentActionIndex++;
         }
 
-        private void MoveAntForward()
+        // Сдвигает муравья на клетку вперед. Возвращает true, если он перешел через край поля
+        private bool MoveAntForward()
         {
             int rows = MyGrid.Rows;
             int cols = MyGrid.Columns;
-            int r = antIndex / cols;
-            int c = antIndex % cols;
+            int row = antIndex / cols;
+            int col = antIndex % cols;
+            bool wrapped = false;
 
-            if (antDirection == 0) r = (r - 1 + rows) % rows;
-            else if (antDirection == 1) c = (c + 1) % cols;
-            else if (antDirection == 2) r = (r + 1) % rows;
-            else if (antDirection == 3) c = (c - 1 + cols) % cols;
+            switch (antDirection)
+            {
+                case 0: wrapped = row == 0; row = (row - 1 + rows) % rows; break;
+                case 1: wrapped = col == cols - 1; col = (col + 1) % cols; break;
+                case 2: wrapped = row == rows - 1; row = (row + 1) % rows; break;
+                case 3: wrapped = col == 0; col = (col - 1 + cols) % cols; break;
+            }
 
-            antIndex = r * cols + c;
+            antIndex = row * cols + col;
+            return wrapped;
         }
     }
 }

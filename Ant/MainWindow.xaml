@@ -12,9 +12,22 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <Grid Margin="10">
+        <Grid Margin="10" SizeChanged="Field_SizeChanged">
             <!-- поле -->
             <UniformGrid x:Name="MyGrid"/>
+
+            <!-- Слой с муравьем поверх сетки: муравей — один элемент, который плавно двигается и поворачивается -->
+            <Canvas x:Name="AntLayer" IsHitTestVisible="False">
+                <Polygon x:Name="AntShape" Points="0.5,0 1,1 0,1" Stretch="Fill" Fill="Red"
+                         Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                    <Polygon.RenderTransform>
+                        <TransformGroup>
+                            <RotateTransform x:Name="AntRotate"/>
+                            <TranslateTransform x:Name="AntMove"/>
+                        </TransformGroup>
+                    </Polygon.RenderTransform>
+                </Polygon>
+            </Canvas>
         </Grid>
 
         <Grid Grid.Column="1" Margin="10">
