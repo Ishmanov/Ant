@@ -83,13 +83,17 @@
                     </WrapPanel>
 
                     <TextBlock Text="Если клетка белая (ПКМ по блоку — удалить):"/>
-                    <Border Background="AliceBlue" MinHeight="150">
-                        <StackPanel x:Name="WhiteRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                    <Border Background="AliceBlue" MinHeight="150" MaxHeight="150">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="WhiteRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                        </ScrollViewer>
                     </Border>
 
                     <TextBlock Text="Если клетка черная (ПКМ по блоку — удалить):"/>
-                    <Border Background="AliceBlue" MinHeight="150">
-                        <StackPanel x:Name="BlackRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                    <Border Background="AliceBlue" MinHeight="150" MaxHeight="150">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="BlackRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                        </ScrollViewer>
                     </Border>
                 </StackPanel>
             </Grid>
