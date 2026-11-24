@@ -29,8 +29,8 @@
                 <!-- кнопки -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Button Content="Сгенерировать" Padding="40 20" Margin="50 0" Click="Generate"/>
-                    <Button Content="Запустить" Padding="40 20" Margin="50 0" Click="Start"/>
-                    <Button Content="Пауза" Padding="40 20" Margin="50 0" Click="Stop"/>
+                    <Button x:Name="StartButton" Content="Запустить" Padding="40 20" Margin="50 0" Click="Start"/>
+                    <Button x:Name="PauseButton" Content="Пауза" Padding="40 20" Margin="50 0" Click="Stop"/>
                 </StackPanel>
             </Grid>
 
@@ -41,15 +41,44 @@
                     <TextBox x:Name="RowsBlock" Text="20" Padding="20 5" Margin="10 0" MaxLength="2"/>
                     <TextBlock Text="X" Padding="0 5"/>
                     <TextBox x:Name="ColumnsBlock" Text="20" Padding="20 5" Margin="10 0" MaxLength="2"/>
-                    <TextBlock Text="Шанс покраски клетки:" Margin="60 0 0 0"  Padding="0 5"/>
+                    <TextBlock Text="Шанс покраски клетки:" Margin="20 0 0 0" Padding="0 5"/>
                     <TextBox x:Name="ChanceBlock" Text="50" Padding="20 5" Margin="10 0 5 0" MaxLength="3"/>
                     <TextBlock Text="%" Padding="0 5"/>
+                    <TextBlock Text="Задержка шага:" Margin="20 0 0 0" Padding="0 5"/>
+                    <TextBlock x:Name="SpeedLabel" Text="100 мс" Padding="0 5"/>
+                    <Slider x:Name="SpeedSlider" Minimum="10" Maximum="300" Value="100" IsSnapToTickEnabled="True" TickFrequency="10" ValueChanged="SpeedSlider_ValueChanged" MinWidth="100" Margin="0 5"/>
                 </StackPanel>
             </Grid>
 
             <Grid Grid.Row="2">
                 <!-- правила -->
+                <StackPanel>
+                    <!-- Палитра доступных действий -->
+                    <WrapPanel>
+                        <Border Tag="Flip" Background="LightGray" Padding="10" Margin="5" Cursor="Hand" MouseMove="ActionBlock_MouseMove">
+                            <TextBlock Text="Перекрасить"/>
+                        </Border>
+                        <Border Tag="Right" Background="LightGray" Padding="10" Margin="5" Cursor="Hand" MouseMove="ActionBlock_MouseMove">
+                            <TextBlock Text="Направо"/>
+                        </Border>
+                        <Border Tag="Left" Background="LightGray" Padding="10" Margin="5" Cursor="Hand" MouseMove="ActionBlock_MouseMove">
+                            <TextBlock Text="Налево"/>
+                        </Border>
+                        <Border Tag="Go" Background="LightGray" Padding="10" Margin="5" Cursor="Hand" MouseMove="ActionBlock_MouseMove">
+                            <TextBlock Text="Идти прямо"/>
+                        </Border>
+                    </WrapPanel>
 
+                    <TextBlock Text="Если клетка белая (ПКМ по блоку — удалить):"/>
+                    <Border Background="AliceBlue" MinHeight="150">
+                        <StackPanel x:Name="WhiteRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                    </Border>
+
+                    <TextBlock Text="Если клетка черная (ПКМ по блоку — удалить):"/>
+                    <Border Background="AliceBlue" MinHeight="150">
+                        <StackPanel x:Name="BlackRulesPanel" AllowDrop="True" Drop="RulesPanel_Drop" Background="Transparent"/>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>
