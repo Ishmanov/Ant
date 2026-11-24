@@ -21,6 +21,11 @@ namespace Ant
     public partial class MainWindow : Window
     {
         public Random r = new Random();
+
+        public int antIndex;
+        public int antDirection; // 0 = Вверх, 1 = Вправо, 2 = Вниз, 3 = Влево
+        public string[] arrows = { "▲", "▶", "▼", "◀" };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -32,10 +37,16 @@ namespace Ant
             int rows = Int32.Parse(RowsBlock.Text);
             int columns = Int32.Parse(ColumnsBlock.Text);
             double blackChance = Int32.Parse(ChanceBlock.Text) / 100.0;
+
             MyGrid.Rows = rows;
             MyGrid.Columns = columns;
 
-            for (int i = 0; i < rows * columns; i++)
+            int totalCells = rows * columns;
+
+            antIndex = r.Next(totalCells); // случайная клетка
+            antDirection = r.Next(4); // направление
+
+            for (int i = 0; i < totalCells; i++)
             {
                 bool isBlack = r.NextDouble() < blackChance;
 
@@ -45,6 +56,19 @@ namespace Ant
                     BorderBrush = Brushes.Gray,
                     BorderThickness = new Thickness(0.5)
                 };
+
+                if (i == antIndex) // клетка с муравьем
+                {
+                    cell.Child = new TextBlock
+                    {
+                        Text = arrows[antDirection],
+                        Foreground = Brushes.Red,
+                        FontWeight = FontWeights.Bold,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = 20
+                    };
+                }
 
                 MyGrid.Children.Add(cell);
             }
