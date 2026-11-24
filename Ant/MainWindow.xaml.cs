@@ -20,9 +20,44 @@ namespace Ant
     /// </summary>
     public partial class MainWindow : Window
     {
+        public Random r = new Random();
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Generate(object sender, RoutedEventArgs e)
+        {
+            MyGrid.Children.Clear();
+            int rows = Int32.Parse(RowsBlock.Text);
+            int columns = Int32.Parse(ColumnsBlock.Text);
+            double blackChance = Int32.Parse(ChanceBlock.Text) / 100.0;
+            MyGrid.Rows = rows;
+            MyGrid.Columns = columns;
+
+            for (int i = 0; i < rows * columns; i++)
+            {
+                bool isBlack = r.NextDouble() < blackChance;
+
+                var cell = new Border
+                {
+                    Background = isBlack ? Brushes.Black : Brushes.White,
+                    BorderBrush = Brushes.Gray,
+                    BorderThickness = new Thickness(0.5)
+                };
+
+                MyGrid.Children.Add(cell);
+            }
+        }
+
+        private void Start(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Stop(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -5,8 +5,52 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Ant"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="800" Width="1600">
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Margin="10">
+            <!-- поле -->
+            <UniformGrid x:Name="MyGrid"/>
+        </Grid>
+
+        <Grid Grid.Column="1" Margin="10">
+            <!-- настройки -->
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition Height="6*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <!-- кнопки -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Button Content="Сгенерировать" Padding="40 20" Margin="50 0" Click="Generate"/>
+                    <Button Content="Запустить" Padding="40 20" Margin="50 0" Click="Start"/>
+                    <Button Content="Пауза" Padding="40 20" Margin="50 0" Click="Stop"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <!-- размер поля, шанс покраски -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Размер поля:" Padding="0 5"/>
+                    <TextBox x:Name="RowsBlock" Text="20" Padding="20 5" Margin="10 0" MaxLength="2"/>
+                    <TextBlock Text="X" Padding="0 5"/>
+                    <TextBox x:Name="ColumnsBlock" Text="20" Padding="20 5" Margin="10 0" MaxLength="2"/>
+                    <TextBlock Text="Шанс покраски клетки:" Margin="60 0 0 0"  Padding="0 5"/>
+                    <TextBox x:Name="ChanceBlock" Text="50" Padding="20 5" Margin="10 0 5 0" MaxLength="3"/>
+                    <TextBlock Text="%" Padding="0 5"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="2">
+                <!-- правила -->
+
+            </Grid>
+        </Grid>
     </Grid>
 </Window>
